@@ -1,6 +1,7 @@
 pub struct Config {
     pub len: usize,
     pub charset: String,
+    pub use_capitals: bool,
 }
 
 impl Config {
@@ -14,6 +15,7 @@ impl Default for Config {
         Self {
             len: 8,
             charset: "abcdefghijklmnopqrstuvwxyz0123456789".to_string(),
+            use_capitals: true,
         }
     }
 }

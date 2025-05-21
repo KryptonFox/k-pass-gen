@@ -49,7 +49,7 @@ pub struct KPassGenApp {
 impl KPassGenApp {
     pub fn new() -> Self {
         let cfg = Config::new();
-        let passwd = generate_password(cfg.len, &cfg.charset);
+        let passwd = generate_password(cfg.len, &cfg.charset, cfg.use_capitals);
         Self {
             config: cfg,
             password: passwd,
