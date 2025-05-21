@@ -1,0 +1,9 @@
+[package]
+name = "k-pass-gen"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+eframe = "0.31.1"
+fastrand = "2.3.0"
+egui_extras = { version = "0.31.1", features = ["image"] }
