@@ -6,9 +6,9 @@ pub fn generate_password_to_ctx(app: &mut KPassGenApp) {
 
 pub fn generate_password(len: usize, charset: &String, use_capitals: bool) -> String {
     let mut res = String::new();
-    let set = charset.split("").collect::<Vec<&str>>();
+    let set = charset.chars().collect::<Vec<char>>();
     for _ in 0..len {
-        let mut char = set.get(fastrand::usize(0..set.len())).unwrap_or(&"").to_string();
+        let mut char = set.get(fastrand::usize(0..set.len())).unwrap_or(&'\0').to_string();
         if use_capitals && fastrand::bool() {
             char = char.to_uppercase();
         }
