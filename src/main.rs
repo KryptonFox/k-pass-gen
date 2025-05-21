@@ -99,6 +99,20 @@ impl eframe::App for KPassGenApp {
                 ui.label("Length: ");
                 ui.add(egui::Slider::new(&mut self.config.len, 2..=100));
             });
+
+            ui.collapsing("Config", |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Charset: ");
+                    ui.centered_and_justified(|ui| {
+                        ui.add(egui::TextEdit::singleline(&mut self.config.charset))
+                    })
+                });
+
+                ui.horizontal(|ui| {
+                    ui.label("Use capitals: ");
+                    ui.add(egui::Checkbox::without_text(&mut self.config.use_capitals));
+                });
+            })
         });
     }
 }
