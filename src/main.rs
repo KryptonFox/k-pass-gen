@@ -112,7 +112,11 @@ impl eframe::App for KPassGenApp {
                     ui.label("Use capitals: ");
                     ui.add(egui::Checkbox::without_text(&mut self.config.use_capitals));
                 });
-            })
+            });
+
+            if ctx.input(|i| i.viewport().close_requested()) {
+                self.config.save()
+            }
         });
     }
 }
