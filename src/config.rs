@@ -9,8 +9,9 @@ const FILE_NAME: &str = "config.toml";
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Config {
     pub len: usize,
-    pub charset: String,
-    pub use_capitals: bool,
+    pub letters: Letters,
+    pub numbers: Numbers,
+    pub special_chars: SpecialChars,
 }
 
 impl Config {
@@ -27,10 +28,40 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             len: 8,
-            charset: "abcdefghijklmnopqrstuvwxyz0123456789([{?*&%$#@}])".to_string(),
-            use_capitals: true,
+            letters: Letters {
+                enabled: true,
+                use_capitals: true,
+                chars: "abcdefghijklmnopqrstuvwxyz".to_string()
+            },
+            numbers: Numbers {
+                enabled: true,
+                chars: "0123456789".to_string()
+            },
+            special_chars: SpecialChars {
+                enabled: true,
+                chars: "([{?*&%$#@}])".to_string()
+            },
         }
     }
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct Letters {
+    pub enabled: bool,
+    pub use_capitals: bool,
+    pub chars: String,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct Numbers {
+    pub enabled: bool,
+    pub chars: String,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct SpecialChars {
+    pub enabled: bool,
+    pub chars: String,
 }
 
 #[derive(Serialize, Deserialize, Default)]
@@ -47,13 +78,16 @@ impl From<&Config> for ConfigFile {
 }
 
 impl ConfigFile {
-    pub fn load() -> std::io::Result<Self> {
-        let cfg = ConfigFile::default();
+    fn cfg_dir() -> std::io::Result<std::path::PathBuf> {
         let cfg_dir = dirs::config_dir().ok_or(std::io::Error::new(
             std::io::ErrorKind::NotFound,
             "Cannot get config directory",
         ))?;
-        let path = cfg_dir.join(DIR_NAME).join(FILE_NAME);
+        Ok(cfg_dir.join(DIR_NAME))
+    }
+    pub fn load() -> std::io::Result<Self> {
+        let cfg = ConfigFile::default();
+        let path = Self::cfg_dir()?.join(FILE_NAME);
 
         if !path.exists() {
             cfg.save()?;
@@ -71,11 +105,7 @@ impl ConfigFile {
     }
 
     pub fn save(&self) -> std::io::Result<()> {
-        let cfg_dir = dirs::config_dir().ok_or(std::io::Error::new(
-            std::io::ErrorKind::NotFound,
-            "Cannot get config directory",
-        ))?;
-        let path = cfg_dir.join(DIR_NAME);
+        let path = Self::cfg_dir()?;
 
         if !path.exists() {
             fs::create_dir(path.clone())?;

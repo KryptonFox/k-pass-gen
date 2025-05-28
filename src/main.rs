@@ -12,7 +12,7 @@ use eframe::egui::{FontId, Vec2};
 
 fn main() -> eframe::Result {
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default().with_inner_size([400., 320.]),
+        viewport: egui::ViewportBuilder::default().with_inner_size([500., 420.]),
         ..Default::default()
     };
     eframe::run_native(
@@ -49,7 +49,7 @@ pub struct KPassGenApp {
 impl KPassGenApp {
     pub fn new() -> Self {
         let cfg = Config::new();
-        let passwd = generate_password(cfg.len, &cfg.charset, cfg.use_capitals);
+        let passwd = generate_password(&cfg);
         Self {
             config: cfg,
             password: passwd,
@@ -102,15 +102,30 @@ impl eframe::App for KPassGenApp {
 
             ui.collapsing("Config", |ui| {
                 ui.horizontal(|ui| {
-                    ui.label("Charset: ");
+                    ui.add(egui::Checkbox::without_text(&mut self.config.letters.enabled));
+                    ui.label("Letters: ");
                     ui.centered_and_justified(|ui| {
-                        ui.add(egui::TextEdit::singleline(&mut self.config.charset))
+                        ui.add(egui::TextEdit::singleline(&mut self.config.letters.chars))
                     })
                 });
 
                 ui.horizontal(|ui| {
                     ui.label("Use capitals: ");
-                    ui.add(egui::Checkbox::without_text(&mut self.config.use_capitals));
+                    ui.add(egui::Checkbox::without_text(&mut self.config.letters.use_capitals));
+                });
+                ui.horizontal(|ui| {
+                    ui.add(egui::Checkbox::without_text(&mut self.config.numbers.enabled));
+                    ui.label("Numbers: ");
+                    ui.centered_and_justified(|ui| {
+                        ui.add(egui::TextEdit::singleline(&mut self.config.numbers.chars))
+                    })
+                });
+                ui.horizontal(|ui| {
+                    ui.add(egui::Checkbox::without_text(&mut self.config.special_chars.enabled));
+                    ui.label("SpecialChars: ");
+                    ui.centered_and_justified(|ui| {
+                        ui.add(egui::TextEdit::singleline(&mut self.config.special_chars.chars))
+                    })
                 });
             });
 
