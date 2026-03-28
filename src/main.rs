@@ -21,7 +21,7 @@ fn main() -> eframe::Result {
         Box::new(|cc| {
             egui_extras::install_image_loaders(&cc.egui_ctx);
             cc.egui_ctx.set_theme(egui::Theme::Dark);
-            cc.egui_ctx.style_mut(|style| {
+            cc.egui_ctx.global_style_mut(|style| {
                 style.spacing.slider_width = 167.0;
                 style.spacing.button_padding = Vec2::from((10., 4.));
                 style.spacing.item_spacing = Vec2::from((10., 10.));
@@ -67,8 +67,8 @@ impl Default for KPassGenApp {
 }
 
 impl eframe::App for KPassGenApp {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().show(ctx, |ui| {
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        egui::CentralPanel::default().show_inside(ui, |ui| {
             ui.vertical_centered(|ui| ui.heading("K Password Generator"));
             ui.separator();
             ui.horizontal(|ui| {
@@ -129,7 +129,7 @@ impl eframe::App for KPassGenApp {
                 });
             });
 
-            if ctx.input(|i| i.viewport().close_requested()) {
+            if ui.ctx().input(|i| i.viewport().close_requested()) {
                 self.config.save()
             }
         });
