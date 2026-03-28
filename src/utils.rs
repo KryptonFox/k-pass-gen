@@ -11,15 +11,10 @@ pub fn generate_password(config: &Config) -> String {
     if config.letters.enabled {
         set.extend(config.letters.chars.chars());
     }
-
-    if config.numbers.enabled {
-        set.extend(config.numbers.chars.chars());
-    }
-
-    if config.special_chars.enabled {
-        set.extend(config.special_chars.chars.chars());
-    }
     
+    for charset in &config.charsets {
+        set.extend(charset.chars.chars());
+    }
     
     let mut res = String::new();
     if set.is_empty() {

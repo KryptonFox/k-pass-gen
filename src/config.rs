@@ -10,8 +10,7 @@ const FILE_NAME: &str = "config.toml";
 pub struct Config {
     pub len: usize,
     pub letters: Letters,
-    pub numbers: Numbers,
-    pub special_chars: SpecialChars,
+    pub charsets: Vec<Charset>,
 }
 
 impl Config {
@@ -31,16 +30,22 @@ impl Default for Config {
             letters: Letters {
                 enabled: true,
                 use_capitals: true,
-                chars: "abcdefghijklmnopqrstuvwxyz".to_string()
+                chars: "abcdefghijklmnopqrstuvwxyz".to_string(),
             },
-            numbers: Numbers {
-                enabled: true,
-                chars: "0123456789".to_string()
-            },
-            special_chars: SpecialChars {
-                enabled: true,
-                chars: "([{?*&%$#@}])".to_string()
-            },
+            charsets: vec![
+                Charset {
+                    name: "Numbers".to_string(),
+                    enabled: true,
+                    chars: "0123456789".to_string(),
+                    name_editing: false,
+                },
+                Charset {
+                    name: "Special Characters".to_string(),
+                    enabled: true,
+                    chars: "?*&%$#@+=-^!".to_string(),
+                    name_editing: false,
+                },
+            ],
         }
     }
 }
@@ -53,15 +58,13 @@ pub struct Letters {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct Numbers {
+pub struct Charset {
+    pub name: String,
     pub enabled: bool,
     pub chars: String,
-}
 
-#[derive(Serialize, Deserialize, Clone)]
-pub struct SpecialChars {
-    pub enabled: bool,
-    pub chars: String,
+    #[serde(skip)]
+    pub name_editing: bool,
 }
 
 #[derive(Serialize, Deserialize, Default)]
