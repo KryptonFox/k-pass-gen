@@ -1,0 +1,96 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+env:
+  APP_NAME: k-pass-gen
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            ext: tar.gz
+            artifact_name: k-pass-gen-linux-x86_64
+          - target: x86_64-pc-windows-gnu
+            os: windows-latest
+            ext: zip
+            artifact_name: k-pass-gen-windows-x86_64
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            ext: tar.gz
+            artifact_name: k-pass-gen-linux-aarch64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libssl-dev pkg-config libudev-dev libasound2-dev
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build release
+        run: cargo build --release --target ${{ matrix.target }}
+        env:
+          CARGO_INCREMENTAL: 0
+
+      - name: Package artifact
+        shell: bash
+        run: |
+          mkdir -p dist
+
+          if [[ "${{ matrix.target }}" == *windows* ]]; then
+            cp target/${{ matrix.target }}/release/k-pass-gen.exe dist/${{ env.APP_NAME }}.exe
+            cd dist && zip ${{ matrix.artifact_name }}.zip ${{ env.APP_NAME }}.exe
+            cd dist && sha256sum ${{ matrix.artifact_name }}.zip > ${{ matrix.artifact_name }}.zip.sha256
+          else
+            cp target/${{ matrix.target }}/release/k-pass-gen dist/${{ env.APP_NAME }}
+            cd dist && tar czf ${{ matrix.artifact_name }}.tar.gz ${{ env.APP_NAME }}
+            cd dist && sha256sum ${{ matrix.artifact_name }}.tar.gz > ${{ matrix.artifact_name }}.tar.gz.sha256
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}-${{ matrix.ext }}
+          path: |
+            dist/${{ matrix.artifact_name }}.${{ matrix.ext }}
+            dist/${{ matrix.artifact_name }}.${{ matrix.ext }}.sha256
+
+  create-release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
