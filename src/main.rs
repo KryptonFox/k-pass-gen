@@ -3,7 +3,7 @@
 mod config;
 mod generator;
 
-use crate::config::Config;
+use crate::config::{Charset, Config};
 use crate::generator::generate_password;
 use eframe::egui;
 use eframe::egui::FontFamily::Proportional;
@@ -48,20 +48,11 @@ pub struct KPassGenApp {
 
 impl KPassGenApp {
     pub fn new() -> Self {
-        let cfg = Config::new();
+        let cfg = Config::load();
         let passwd = generate_password(&cfg);
         Self {
             config: cfg,
             password: passwd,
-        }
-    }
-}
-
-impl Default for KPassGenApp {
-    fn default() -> Self {
-        Self {
-            config: Config::new(),
-            password: String::new(),
         }
     }
 }
@@ -97,48 +88,69 @@ impl eframe::App for KPassGenApp {
             ui.separator();
             ui.horizontal(|ui| {
                 ui.label("Length: ");
-                ui.add(egui::Slider::new(&mut self.config.len, 2..=100));
+                ui.add(egui::Slider::new(&mut self.config.len, 1..=128));
             });
-
-            ui.collapsing("Config", |ui| {
-                ui.horizontal(|ui| {
-                    ui.add(egui::Checkbox::without_text(
-                        &mut self.config.letters.enabled,
-                    ));
-                    ui.label("Letters: ");
-                    ui.centered_and_justified(|ui| {
-                        ui.add(egui::TextEdit::singleline(&mut self.config.letters.chars))
-                    })
-                });
-
-                ui.horizontal(|ui| {
-                    ui.label("Use capitals: ");
-                    ui.add(egui::Checkbox::without_text(
-                        &mut self.config.letters.use_capitals,
-                    ));
-                });
-
-                for charset in &mut self.config.charsets {
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                ui.collapsing("Config", |ui| {
                     ui.horizontal(|ui| {
-                        ui.add(egui::Checkbox::without_text(&mut charset.enabled));
-
-                        if charset.name_editing {
-                            ui.add(
-                                egui::TextEdit::singleline(&mut charset.name)
-                                    .desired_width(0.0)
-                                    .clip_text(false),
-                            );
-                        } else {
-                            ui.label(format!("{}: ", charset.name));
-                        }
-                        if ui.button("✏").clicked() {
-                            charset.name_editing = !charset.name_editing;
-                        }
+                        ui.add(egui::Checkbox::without_text(
+                            &mut self.config.letters.enabled,
+                        ));
+                        ui.label("Letters: ");
                         ui.centered_and_justified(|ui| {
-                            ui.add(egui::TextEdit::singleline(&mut charset.chars))
+                            ui.add(egui::TextEdit::singleline(&mut self.config.letters.chars))
                         })
                     });
-                }
+
+                    ui.horizontal(|ui| {
+                        ui.label("Use capitals: ");
+                        ui.add(egui::Checkbox::without_text(
+                            &mut self.config.letters.use_capitals,
+                        ));
+                    });
+
+                    let mut to_delete = vec![];
+                    for (index, charset) in self.config.charsets.iter_mut().enumerate() {
+                        ui.horizontal(|ui| {
+                            if ui.add(egui::Button::new("X")).clicked() {
+                                to_delete.push(index);
+                            }
+                            ui.add(egui::Checkbox::without_text(&mut charset.enabled));
+
+                            if charset.name_editing {
+                                ui.add(
+                                    egui::TextEdit::singleline(&mut charset.name)
+                                        .desired_width(0.0)
+                                        .clip_text(false),
+                                );
+                            } else {
+                                ui.label(&charset.name);
+                            }
+                            if ui.button("✏").clicked() {
+                                charset.name_editing = !charset.name_editing;
+                            }
+                            ui.label(": ");
+                            ui.centered_and_justified(|ui| {
+                                ui.add(egui::TextEdit::singleline(&mut charset.chars))
+                            });
+                        });
+                    }
+                    ui.horizontal(|ui| {
+                        if ui.button("+").clicked() {
+                            self.config.charsets.push(Charset::new(format!(
+                                "Charset ({})",
+                                self.config.charsets.len() + 1
+                            )))
+                        }
+                        if ui.button("Reset").clicked() {
+                            self.config = Config::default();
+                        }
+                    });
+
+                    for i in to_delete {
+                        self.config.charsets.remove(i);
+                    }
+                });
             });
 
             if ui.ctx().input(|i| i.viewport().close_requested()) {

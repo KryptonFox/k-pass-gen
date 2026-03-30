@@ -14,7 +14,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new() -> Self {
+    pub fn load() -> Self {
         ConfigFile::load().unwrap_or_default().config
     }
 
@@ -65,6 +65,17 @@ pub struct Charset {
 
     #[serde(skip)]
     pub name_editing: bool,
+}
+
+impl Charset {
+    pub(crate) fn new(name: String) -> Self {
+        Self {
+            name,
+            enabled: true,
+            chars: "".to_string(),
+            name_editing: false,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Default)]
