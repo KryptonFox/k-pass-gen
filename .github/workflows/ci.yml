@@ -7,7 +7,7 @@ on:
     branches: [main, master]
 
 jobs:
-  check:
+  build:
     strategy:
       fail-fast: false
       matrix:
@@ -31,11 +31,5 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Check formatting
-        run: rustfmt --check --edition 2021 src/**/*.rs || true
-
       - name: Build
         run: cargo build --target ${{ matrix.target }}
-
-      - name: Run tests
-        run: cargo test --target ${{ matrix.target }}

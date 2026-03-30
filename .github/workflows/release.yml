@@ -17,16 +17,13 @@ jobs:
         include:
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
-            ext: tar.gz
-            artifact_name: k-pass-gen-linux-x86_64
+            artifact: k-pass-gen-linux-x86_64.tar.gz
           - target: x86_64-pc-windows-gnu
             os: windows-latest
-            ext: zip
-            artifact_name: k-pass-gen-windows-x86_64
+            artifact: k-pass-gen-windows-x86_64.zip
           - target: aarch64-unknown-linux-gnu
             os: ubuntu-latest
-            ext: tar.gz
-            artifact_name: k-pass-gen-linux-aarch64
+            artifact: k-pass-gen-linux-aarch64.tar.gz
 
     runs-on: ${{ matrix.os }}
 
@@ -50,30 +47,27 @@ jobs:
         env:
           CARGO_INCREMENTAL: 0
 
-      - name: Package artifact
+      - name: Package
         shell: bash
         run: |
-          mkdir -p dist
-
+          cd target/${{ matrix.target }}/release
           if [[ "${{ matrix.target }}" == *windows* ]]; then
-            cp target/${{ matrix.target }}/release/k-pass-gen.exe dist/${{ env.APP_NAME }}.exe
-            cd dist && zip ${{ matrix.artifact_name }}.zip ${{ env.APP_NAME }}.exe
-            cd dist && sha256sum ${{ matrix.artifact_name }}.zip > ${{ matrix.artifact_name }}.zip.sha256
+            zip ${{ matrix.artifact }} k-pass-gen.exe
           else
-            cp target/${{ matrix.target }}/release/k-pass-gen dist/${{ env.APP_NAME }}
-            cd dist && tar czf ${{ matrix.artifact_name }}.tar.gz ${{ env.APP_NAME }}
-            cd dist && sha256sum ${{ matrix.artifact_name }}.tar.gz > ${{ matrix.artifact_name }}.tar.gz.sha256
+            cp k-pass-gen ${{ env.APP_NAME }}
+            tar czf ${{ matrix.artifact }} ${{ env.APP_NAME }}
           fi
+          sha256sum ${{ matrix.artifact }} > ${{ matrix.artifact }}.sha256
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact_name }}-${{ matrix.ext }}
+          name: ${{ matrix.artifact }}
           path: |
-            dist/${{ matrix.artifact_name }}.${{ matrix.ext }}
-            dist/${{ matrix.artifact_name }}.${{ matrix.ext }}.sha256
+            target/${{ matrix.target }}/release/${{ matrix.artifact }}
+            target/${{ matrix.target }}/release/${{ matrix.artifact }}.sha256
 
-  create-release:
+  release:
     needs: build
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
@@ -81,16 +75,16 @@ jobs:
       contents: write
 
     steps:
-      - name: Download artifacts
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          path: dist
-          merge-multiple: true
+          path: artifacts
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*.*
+          files: |
+            artifacts/**/*.tar.gz
+            artifacts/**/*.zip
+            artifacts/**/*.sha256
           generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
