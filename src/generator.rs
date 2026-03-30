@@ -1,19 +1,14 @@
 use crate::config::Config;
-use crate::KPassGenApp;
-
-pub fn generate_password_to_ctx(app: &mut KPassGenApp) {
-    app.password = generate_password(&app.config);
-}
 
 pub fn generate_password(config: &Config) -> String {
     let mut set: Vec<char> = Vec::new();
 
     if config.letters.enabled {
-        set.extend(config.letters.chars.chars());
+        set.extend(config.letters.chars.trim().chars());
     }
-    
+
     for charset in &config.charsets {
-        set.extend(charset.chars.chars());
+        set.extend(charset.chars.trim().chars());
     }
     
     let mut res = String::new();

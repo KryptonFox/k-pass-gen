@@ -1,10 +1,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod config;
-mod utils;
+mod generator;
 
 use crate::config::Config;
-use crate::utils::{generate_password, generate_password_to_ctx};
+use crate::generator::generate_password;
 use eframe::egui;
 use eframe::egui::FontFamily::Proportional;
 use eframe::egui::TextStyle::{Body, Button, Heading, Monospace, Name, Small};
@@ -83,7 +83,7 @@ impl eframe::App for KPassGenApp {
                     .add(egui::Button::image_and_text(generate_image, "Generate"))
                     .clicked()
                 {
-                    generate_password_to_ctx(self);
+                    self.password = generate_password(&self.config);
                 }
                 let copy_image = egui::include_image!("../res/copy.png");
                 if ui
@@ -123,7 +123,11 @@ impl eframe::App for KPassGenApp {
                         ui.add(egui::Checkbox::without_text(&mut charset.enabled));
 
                         if charset.name_editing {
-                            ui.add(egui::TextEdit::singleline(&mut charset.name).desired_width(0.0).clip_text(false));
+                            ui.add(
+                                egui::TextEdit::singleline(&mut charset.name)
+                                    .desired_width(0.0)
+                                    .clip_text(false),
+                            );
                         } else {
                             ui.label(format!("{}: ", charset.name));
                         }
@@ -134,7 +138,7 @@ impl eframe::App for KPassGenApp {
                             ui.add(egui::TextEdit::singleline(&mut charset.chars))
                         })
                     });
-                };
+                }
             });
 
             if ui.ctx().input(|i| i.viewport().close_requested()) {
