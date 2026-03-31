@@ -54,8 +54,7 @@ jobs:
           if [[ "${{ matrix.target }}" == *windows* ]]; then
             zip ${{ matrix.artifact }} k-pass-gen.exe
           else
-            cp k-pass-gen ${{ env.APP_NAME }}
-            tar czf ${{ matrix.artifact }} ${{ env.APP_NAME }}
+            tar czf ${{ matrix.artifact }} k-pass-gen
           fi
           sha256sum ${{ matrix.artifact }} > ${{ matrix.artifact }}.sha256
 
