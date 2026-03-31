@@ -43,15 +43,19 @@ jobs:
         env:
           CARGO_INCREMENTAL: 0
 
-      - name: Package
+      - name: Package Linux
+        if: matrix.target != 'x86_64-pc-windows-gnu'
+        run: |
+          cd target/${{ matrix.target }}/release
+          tar czf ${{ matrix.artifact }} k-pass-gen
+          sha256sum ${{ matrix.artifact }} > ${{ matrix.artifact }}.sha256
+
+      - name: Package Windows
+        if: matrix.target == 'x86_64-pc-windows-gnu'
         shell: bash
         run: |
           cd target/${{ matrix.target }}/release
-          if [[ "${{ matrix.target }}" == *windows* ]]; then
-            zip ${{ matrix.artifact }} k-pass-gen.exe
-          else
-            tar czf ${{ matrix.artifact }} k-pass-gen
-          fi
+          powershell -Command "Compress-Archive -Path k-pass-gen.exe -DestinationPath ${{ matrix.artifact }}"
           sha256sum ${{ matrix.artifact }} > ${{ matrix.artifact }}.sha256
 
       - name: Upload artifact
